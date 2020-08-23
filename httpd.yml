@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: httpd-pv-claim
+  labels:
+    app: httpd-webserver
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  httpd-webserver
+spec:
+  selector:
+    matchLabels:
+      app: httpd-webserver
+  template:
+    metadata: 
+      labels: 
+        app: httpd-webserver
+    spec:
+      containers:
+        - image: httpd
+          name:  http-webserver
+          imagePullPolicy: IfNotPresent 
+          volumeMounts:
+            - name: http-vol
+              mountPath: /usr/local/apache2/htdocs
+          ports:
+          - containerPort: 80
+
+      volumes:
+       - name: http-vol
+         persistentVolumeClaim:
+             claimName: httpd-pv-claim
+      volumes:
+       - name: http-vol
+         hostPath:
+             path: /home/docker/httpd
+--- 
+apiVersion: v1
+kind: Service
+metadata: 
+  labels: 
+    app: httpd-webserver
+  name: httpd-webserver
+spec:
+  type: NodePort 
+  ports: 
+    - nodePort: 32145
+      port: 80
+      protocol: TCP
+  selector: 
+    app: httpd-webserver
