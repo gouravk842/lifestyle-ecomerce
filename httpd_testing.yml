@@ -41,7 +41,7 @@ spec:
       volumes:
        - name: httptest-vol
          hostPath:
-             path: /home/docker/httpd
+             path: /home/docker/httpd_testing
 --- 
 apiVersion: v1
 kind: Service
