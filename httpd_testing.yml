@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: httpdtest-pv-claim
+  labels:
+    app: httpdtest-webserver
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  httpdtest-webserver
+spec:
+  selector:
+    matchLabels:
+      app: httpdtest-webserver
+  template:
+    metadata: 
+      labels: 
+        app: httpdtest-webserver
+    spec:
+      containers:
+        - image: httpd
+          name:  httptest-webserver
+          imagePullPolicy: IfNotPresent 
+          volumeMounts:
+            - name: httptest-vol
+              mountPath: /usr/local/apache2/htdocs
+          ports:
+          - containerPort: 80
+
+      volumes:
+       - name: httptest-vol
+         persistentVolumeClaim:
+             claimName: httpdtest-pv-claim
+      volumes:
+       - name: httptest-vol
+         hostPath:
+             path: /home/docker/httpd
+--- 
+apiVersion: v1
+kind: Service
+metadata: 
+  labels: 
+    app: httpdtest-webserver
+  name: httpdtest-webserver
+spec:
+  type: NodePort 
+  ports: 
+    - nodePort: 32146
+      port: 80
+      protocol: TCP
+  selector: 
+    app: httpdtest-webserver
