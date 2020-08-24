@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: httpdcontrol-pv-claim
+  labels:
+    app: httpdcontrol-webserver
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  httpdcontrol-webserver
+spec:
+  selector:
+    matchLabels:
+      app: httpdcontrol-webserver
+  template:
+    metadata: 
+      labels: 
+        app: httpdcontrol-webserver
+    spec:
+      containers:
+        - image: httpd
+          name:  httpcontrol-webserver
+          imagePullPolicy: IfNotPresent 
+          volumeMounts:
+            - name: httpcontrol-vol
+              mountPath: /usr/local/apache2/htdocs
+          ports:
+          - containerPort: 80
+
+      volumes:
+       - name: httpcontrol-vol
+         persistentVolumeClaim:
+             claimName: httpdcontrol-pv-claim
+      volumes:
+       - name: httpcontrol-vol
+         hostPath:
+             path: /home/docker/control
+--- 
+apiVersion: v1
+kind: Service
+metadata: 
+  labels: 
+    app: httpdcontrol-webserver
+  name: httpdcontrol-webserver
+spec:
+  type: NodePort 
+  ports: 
+    - nodePort: 32045
+      port: 80
+      protocol: TCP
+  selector: 
+    app: httpdcontrol-webserver
